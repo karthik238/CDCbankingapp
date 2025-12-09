@@ -1,0 +1,7 @@
+•	sudo apt update
+•	sudo apt install openjdk-8-jdk –y
+•	sudo snap install intellij-idea-ultimate –classic
+
+
+•	sudo systemctl status tomcat
+•	sudo chmod -R a+rX /opt/tomcat9
