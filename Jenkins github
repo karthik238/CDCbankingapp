@@ -1,22 +1,64 @@
-bash
+com.example.calculator- package
 
-sudo chown -R jenkins: jenkins /var/lib/jenkins/workspace
+OperatorService.java
 
-Also give permission to execute Git inside workspace:
+package com.example.calculator;
 
-bash
-
-sudo chmod -R 775 /var/lib/jenkins/workspace
-
-sudo usermod ag sudo jenkins
-
-Restart Jenkins:
-
-bash
-
-sudo systemctl restart
-
-jenkins
+import javax.jws.WebMethod;
+import javax.jws.WebService;
 
 
-shazilh2
+
+
+
+@WebService
+public class OperatorService {
+
+    @WebMethod
+    public int add(int a, int b) { return a + b; }
+
+    @WebMethod
+    public int sub(int a, int b) { return a - b; }
+
+    @WebMethod
+    public int mul(int a, int b) { return a * b; }
+
+    @WebMethod
+    public int div(int a, int b) { return a / b; }
+}
+
+OperatorPublisher.java
+
+package com.example.calculator;
+
+import javax.xml.ws.Endpoint;
+
+public class OperatorPublisher {
+    public static void main(String[] args) {
+        String url = "http://localhost:8080/calculator";
+        Endpoint.publish(url, new OperatorService());
+        System.out.println("🚀 Service running @ " + url + "?wsdl");
+    }
+}
+
+New project any name
+com.example.client- package
+TestOperatorClient.java
+
+package com.example.client;
+
+public class TestOperatorClient {
+
+    public static void main(String[] args) {
+
+        OperatorServiceService service = new OperatorServiceService();
+        OperatorService port = service.getOperatorServicePort();
+
+        System.out.println("Add: " + port.add(10, 5));
+        System.out.println("Sub: " + port.sub(10, 5));
+        System.out.println("Mul: " + port.mul(10, 5));
+        System.out.println("Div: " + port.div(10, 5));
+    }
+}
+
+\Users\hp\IdeaProjects\Client project\src>wsimport -keep -p com.example.client http://localhost:8080/calculator?wsdl
