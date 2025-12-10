@@ -3,3 +3,41 @@ nfs
 sudo apt install nfs-common -y
 sudo mkdir -p /mnt/nfs_check
 sudo mount -t nfs -o nfsvers=3 <truenas-ip>:/mnt/Pool2/LINUX /mnt/nfs_check
+
+
+passwordless
+ssh-keygen -t rsa -b 4096
+eval "$(ssh-agent -s)" 
+ssh-add ~/.ssh/id_rsa
+
+ssh-copy-id msis@slaveip1
+ssh-copy-id msis@slaveip2
+
+ssh msis@slaveip1 
+ssh msis@slaveip2
+
+sudo apt update
+sudo apt install nfs-kernel-server -y //on themaster
+sudo apt install nfs-common -y
+
+sudo mkdir -p /nfs/shared 
+sudo chmod 777 /nfs/shared
+
+/nfs/shared 172.18.181.38(rw,sync,no_subtree_check) //here 172.18.181.38 is slaveip1
+/nfs/shared 172.18.181.50(rw,sync,no_subtree_check)
+
+sudo exportfs -a
+sudo systemctl restart nfs-kernel-server 
+sudo exportfs -v
+
+sudo mkdir -p /nfs/shared
+sudo mount 172.18.181.38:/nfs/shared /nfs/shared on slave 1
+
+df -h | grep nfs
+
+
+cd /nfs/shared //from slave1
+touch testfile
+
+cd /nfs/shared //from master
+ls
