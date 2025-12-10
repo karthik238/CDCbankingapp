@@ -5,3 +5,12 @@
 
 •	sudo systemctl status tomcat
 •	sudo chmod -R a+rX /opt/tomcat9
+
+
+ssh-keygen -t rsa -b 4096
+ssh-copy-id msis@slaveip1
+ssh-copy-id msis@slaveip2
+
+sudo apt update
+sudo apt install nfs-kernel-server -y //on the master
+sudo apt install nfs-common -y //on node
