@@ -1,0 +1,5 @@
+nfs
+
+sudo apt install nfs-common -y
+sudo mkdir -p /mnt/nfs_check
+sudo mount -t nfs -o nfsvers=3 <truenas-ip>:/mnt/Pool2/LINUX /mnt/nfs_check
