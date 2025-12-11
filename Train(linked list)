@@ -1,0 +1,183 @@
+
+#define HEADER_H
+
+#define SUCCESS 1
+#define INSERT_FAIL 0
+#define ALLOC_FAIL NULL
+#define SIZE 30
+#define IS_NULL(PTR) ((PTR) == NULL)
+
+typedef struct Station {
+    char city[SIZE];
+    char arrival[SIZE];
+    char departure[SIZE];
+    int distance;
+} Station;
+
+typedef struct Snode {
+    Station data;
+    struct Snode *ptr;
+} Snode;
+
+typedef struct List {
+    char train_name[SIZE];
+    char train_no[SIZE];
+    Snode *head, *tail;
+    int count;
+}  List;
+
+List* initialise(char *name, char *num);
+Snode* get_station_node(Station data);
+int insert(List *lis, Station st_data);
+void display(List *lis);
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "header.h"
+
+List* initialise(char* name, char* num)
+ {
+    List* lis = (List*)malloc(sizeof(List));
+    if (IS_NULL(lis)) return ALLOC_FAIL;
+
+    strcpy(lis->train_name, name);
+    strcpy(lis->train_no, num);
+    lis->head = lis->tail = NULL;
+    lis->count = 0;
+    return lis;
+}
+
+Snode* get_station_node(Station data) 
+{
+    Snode* new_node = (Snode*)malloc(sizeof(Snode));
+    if (IS_NULL(new_node)) return ALLOC_FAIL;
+
+    new_node->data = data;
+    new_node->ptr = NULL;
+    return new_node;
+}
+
+int insert(List* lis, Station st_data) 
+{
+    Snode* new_node = get_station_node(st_data);
+    if (IS_NULL(new_node)) return INSERT_FAIL;
+
+    if (lis->head == NULL)
+        lis->head = lis->tail = new_node;
+    else {
+        lis->tail->ptr = new_node;
+        lis->tail = new_node;
+    }
+
+    lis->count++;
+    return SUCCESS;
+}
+
+void display(List *lis)
+ {
+    Snode* temp;
+    printf("\nTrain Number: %s\nTrain Name: %s\n", lis->train_no, lis->train_name);
+    printf("-------------------------------------------------------------\n");
+    printf("City\t\tArrival\t\tDeparture\tDistance\n");
+    printf("-------------------------------------------------------------\n");
+
+    for (temp = lis->head; temp != NULL; temp = temp->ptr) {
+        printf("%-15s %-10s %-10s %dkm\n",
+            temp->data.city,
+            temp->data.arrival,
+            temp->data.departure,
+            temp->data.distance);
+    }
+    printf("\n");
+}
+
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include "header.h"
+
+int main() {
+    List* test = initialise("Mumbai CSMT Super Fast Express", "12134");
+    Station st;
+
+    strcpy(st.city, "Mangaluru Jn - MAJN");
+    strcpy(st.arrival, "Start");
+    strcpy(st.departure, "13:00");
+    st.distance = 0;
+    assert(insert(test, st) == SUCCESS);
+
+    strcpy(st.city, "Udupi");
+    strcpy(st.arrival, "14:00");
+    strcpy(st.departure, "14:10");
+    st.distance = 100;
+    assert(insert(test, st) == SUCCESS);
+
+    strcpy(st.city, "Bhatkal");
+    strcpy(st.arrival, "14:50");
+    strcpy(st.departure, "15:00");
+    st.distance = 180;
+    assert(insert(test, st) == SUCCESS);
+
+    strcpy(st.city, "Kumta");
+    strcpy(st.arrival, "15:40");
+    strcpy(st.departure, "15:45");
+    st.distance = 220;
+    assert(insert(test, st) == SUCCESS);
+
+    strcpy(st.city, "Madgaon");
+    strcpy(st.arrival, "16:15");
+    strcpy(st.departure, "16:30");
+    st.distance = 280;
+    assert(insert(test, st) == SUCCESS);
+
+    strcpy(st.city, "Ratnagiri");
+    strcpy(st.arrival, "17:20");
+    strcpy(st.departure, "END");
+    st.distance = 380;
+    assert(insert(test, st) == SUCCESS);
+
+    display(test);
+
+ 
+    List* train = initialise("Matsyagandha Express", "12620");
+
+    strcpy(st.city, "Mangaluru");
+    strcpy(st.arrival, "Start");
+    strcpy(st.departure, "14:20");
+    st.distance = 0;
+    assert(insert(train, st) == SUCCESS);
+
+    strcpy(st.city, "Udupi");
+    strcpy(st.arrival, "15:40");
+    strcpy(st.departure, "15:50");
+    st.distance = 100;
+    assert(insert(train, st) == SUCCESS);
+
+    strcpy(st.city, "Kundapura");
+    strcpy(st.arrival, "16:14");
+    strcpy(st.departure, "16:16");
+    st.distance = 180;
+    assert(insert(train, st) == SUCCESS);
+
+    strcpy(st.city, "Bhatkal");
+    strcpy(st.arrival, "17:42");
+    strcpy(st.departure, "17:45");
+    st.distance = 250;
+    assert(insert(train, st) == SUCCESS);
+
+    strcpy(st.city, "Honnavar");
+    strcpy(st.arrival, "18:46");
+    strcpy(st.departure, "18:48");
+    st.distance = 300;
+    assert(insert(train, st) == SUCCESS);
+
+    strcpy(st.city, "Kumta");
+    strcpy(st.arrival, "20:00");
+    strcpy(st.departure, "END");
+    st.distance = 350;
+    assert(insert(train, st) == SUCCESS);
+
+    display(train);
+    return 0;
+}
