@@ -1,255 +1,86 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Cafe application
 
+Parameters:
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 
-#define s_size 50
-#define st_size 100
-#define ARRAY_ALLOC_FAIL NULL
-#define INT_ALLOC_FAIL NULL
-#define ARRAY_FULL -1
-#define ARRAY_DEALLOC -2
-#define INSERT_SUCCESS 1
+  CafeNetworkParameter:
+    Type: String
+    Default: update-cafe-network
 
-typedef struct {
-    char station_name[s_size];
-    char station_code[s_size];
-    char arrival[s_size];
-    char departure[s_size];
-    int distance;
-    int halt;
-    int platform;
-} Station;
+  InstanceTypeParam:
+    Type: String
+    Description: "EC2 instance type (choose one of: t2.micro, t2.small, t3.micro, t3.small)"
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t3.micro
+      - t3.small
+    Default: t2.small
 
-typedef struct {
-    int train_no;
-    char train_name[s_size];
-    char train_type[s_size];
+Mappings:
+  RegionMap:
+    us-east-1:
+      keypair: "vockey"
+    us-west-2:
+      keypair: "cafe-oregon"
 
-    Station st[st_size];  // Array of stations
-    int st_count;
-} Train;
+Resources:
 
-typedef struct {
-    Train *arr;        // Dynamic array
-    int train_count;   // number of trains added
-    int total_trains;  // allocated size
-} TrainArray;
+  CafeSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH, HTTP access
+      VpcId: !ImportValue
+        'Fn::Sub': '${CafeNetworkParameter}-VpcID'
+      Tags:
+        - Key: Name
+          Value: CafeSG
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
 
-TrainArray * initialize(int size);
-int insert_data(TrainArray * , Train data);
-void search_by_train_no(TrainArray * , int no);
+  CafeInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceTypeParam
+      KeyName: !FindInMap [RegionMap, !Ref "AWS::Region", keypair]
+      # المعلومة في التمرين: CafeRole موجود مسبقًا في الحساب، لذلك نستخدم اسمه هنا كـ IamInstanceProfile
+      IamInstanceProfile: CafeRole
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          SubnetId: !ImportValue
+            'Fn::Sub': '${CafeNetworkParameter}-SubnetID'
+          GroupSet:
+            - !Ref CafeSG
+      Tags:
+        - Key: Name
+          Value: Cafe Web Server
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum -y update
+          yum install -y httpd mariadb-server wget
+          amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+          systemctl enable httpd
+          systemctl start httpd
+          systemctl enable mariadb
+          systemctl start mariadb
+          wget https://aws-tc-largeobjects.s3.us-west-2.amazonaws.com/CUR-TF-200-ACACAD-3-113230/15-lab-mod11-challenge-CFn/s3/cafe-app.sh
+          chmod +x cafe-app.sh
+          ./cafe-app.sh
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "header1.h"
-
-TrainArray * initialize(int size)
-{
-    TrainArray * t_arr;
-
-    t_arr = (TrainArray *)malloc(sizeof(TrainArray));
-    if(t_arr == NULL) return ARRAY_ALLOC_FAIL;
-
-    t_arr->train_count = 0;
-    t_arr->total_trains = size;
-    t_arr->arr = (Train *)malloc(sizeof(Train) * size);
-
-    if(t_arr->arr == NULL) {
-        free(t_arr);
-        return INT_ALLOC_FAIL;
-    }
-    return t_arr;
-}
-
-int insert_data(TrainArray * t_arr, Train data)
-{
-    if(t_arr == NULL) return ARRAY_DEALLOC;
-
-    if(t_arr->train_count == t_arr->total_trains) return ARRAY_FULL;
-
-    *(t_arr->arr + t_arr->train_count) = data;
-    t_arr->train_count++;
-
-    return INSERT_SUCCESS;
-}
-void search_by_train_no(TrainArray *t_arr, int no)
-{
-    for (int i = 0; i < t_arr->train_count; i++)
-    {
-        if (t_arr->arr[i].train_no == no)
-        {
-            printf("%d %s %s %d\n",
-                   t_arr->arr[i].train_no,
-                   t_arr->arr[i].train_name,
-                   t_arr->arr[i].train_type,
-                   t_arr->arr[i].st_count);
-        }
-    }
-}
-
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include "header1.h"
-
-int main()
-{
-    TrainArray *db;
-    Train t;
-
-    // Initialize array of 5 trains
-    db = initialize(5);
-    assert(db != NULL);
-    assert(db->train_count == 0);
-    assert(db->total_trains == 5);
-
-
-    t.train_no = 101;
-    strcpy(t.train_name, "KonkanExpress");
-    strcpy(t.train_type, "Express");
-
-    t.st_count = 3;
-
-    strcpy(t.st[0].station_name, "Mangalore");
-    strcpy(t.st[0].station_code, "MAQ");
-    strcpy(t.st[0].arrival, "-");
-    strcpy(t.st[0].departure, "06:00");
-    t.st[0].distance = 0;
-    t.st[0].halt = 0;
-    t.st[0].platform = 1;
-
-    strcpy(t.st[1].station_name, "Udupi");
-    strcpy(t.st[1].station_code, "UD");
-    strcpy(t.st[1].arrival, "06:45");
-    strcpy(t.st[1].departure, "06:47");
-    t.st[1].distance = 60;
-    t.st[1].halt = 2;
-    t.st[1].platform = 2;
-
-    strcpy(t.st[2].station_name, "Mumbai");
-    strcpy(t.st[2].station_code, "MMCT");
-    strcpy(t.st[2].arrival, "20:30");
-    strcpy(t.st[2].departure, "-");
-    t.st[2].distance = 900;
-    t.st[2].halt = 0;
-    t.st[2].platform = 4;
-
-    assert(insert_data(db, t));
-    assert(db->train_count == 1);
-
-    strcpy(t.train_name, "Intercity");
-    strcpy(t.train_type, "Superfast");
-
-    t.st_count = 2;
-
-    strcpy(t.st[0].station_name, "Udupi");
-    strcpy(t.st[0].station_code, "UD");
-    strcpy(t.st[0].arrival, "-");
-    strcpy(t.st[0].departure, "07:00");
-    t.st[0].distance = 0;
-    t.st[0].halt = 0;
-    t.st[0].platform = 2;
-
-    strcpy(t.st[1].station_name, "Goa");
-    strcpy(t.st[1].station_code, "GOA");
-    strcpy(t.st[1].arrival, "12:00");
-    strcpy(t.st[1].departure, "-");
-    t.st[1].distance = 350;
-    t.st[1].halt = 0;
-    t.st[1].platform = 1;
-
-    assert(insert_data(db, t));
-    assert(db->train_count == 2);
-
-
-    t.train_no = 103;
-    strcpy(t.train_name, "MumbaiExpress");
-    strcpy(t.train_type, "Express");
-
-    t.st_count = 3;
-
-    strcpy(t.st[0].station_name, "Goa");
-    strcpy(t.st[0].station_code, "GOA");
-    strcpy(t.st[0].arrival, "-");
-    strcpy(t.st[0].departure, "06:00");
-    t.st[0].distance = 0;
-    t.st[0].halt = 0;
-    t.st[0].platform = 1;
-
-    strcpy(t.st[1].station_name, "Udupi");
-    strcpy(t.st[1].station_code, "UD");
-    strcpy(t.st[1].arrival, "11:00");
-    strcpy(t.st[1].departure, "11:05");
-    t.st[1].distance = 250;
-    t.st[1].halt = 5;
-    t.st[1].platform = 2;
-
-    strcpy(t.st[2].station_name, "Mangalore");
-    strcpy(t.st[2].station_code, "MAQ");
-    strcpy(t.st[2].arrival, "12:30");
-    strcpy(t.st[2].departure, "-");
-    t.st[2].distance = 310;
-    t.st[2].halt = 0;
-    t.st[2].platform = 3;
-
-    assert(insert_data(db, t));
-    assert(db->train_count == 3);
-
-    t.train_no = 104;
-    strcpy(t.train_name, "JanShatabdi");
-    strcpy(t.train_type, "Superfast");
-
-    t.st_count = 2;
-
-    strcpy(t.st[0].station_name, "Mangalore");
-    strcpy(t.st[0].station_code, "MAQ");
-    strcpy(t.st[0].arrival, "-");
-    strcpy(t.st[0].departure, "14:00");
-    t.st[0].distance = 0;
-    t.st[0].halt = 0;
-    t.st[0].platform = 1;
-
-    strcpy(t.st[1].station_name, "Udupi");
-    strcpy(t.st[1].station_code, "UD");
-    strcpy(t.st[1].arrival, "14:45");
-    strcpy(t.st[1].departure, "-");
-    t.st[1].distance = 60;
-    t.st[1].halt = 0;
-    t.st[1].platform = 2;
-
-    assert(insert_data(db, t));
-    assert(db->train_count == 4);
-
-    t.train_no = 105;
-    strcpy(t.train_name, "GoaExpress");
-    strcpy(t.train_type, "Express");
-
-    t.st_count = 1;
-
-    strcpy(t.st[0].station_name, "Goa");
-    strcpy(t.st[0].station_code, "GOA");
-    strcpy(t.st[0].arrival, "-");
-    strcpy(t.st[0].departure, "-");
-    t.st[0].distance = 0;
-    t.st[0].halt = 0;
-    t.st[0].platform = 1;
-
-    assert(insert_data(db, t));
-    assert(db->train_count == 5);
-
-    t.train_no = 106;
-    strcpy(t.train_name, "ExtraTrain");
-    strcpy(t.train_type, "Express");
-    t.st_count = 1;
-
-    assert(insert_data(db, t) == ARRAY_FULL);
-    assert(db->train_count == 5);
-
-    search_by_train_no(db,101);
-
-
-
-    return 0;
-}
+Outputs:
+  WebServerPublicIP:
+    Description: Public IP of the web server
+    Value: !GetAtt CafeInstance.PublicIp
