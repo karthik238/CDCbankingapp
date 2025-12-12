@@ -1,0 +1,24 @@
+Go to VPC
+create security goups
+select databasesg edit inbound rules - type mysql/arora source lamda sg
+
+runtime setting-handler(edit)
+
+copy arn(sns) go to lambda
+salesanalysis report
+edit enviroment variable value paste it key topicARN
+
+create email subscription in sns set with a overview 1-sales give your email
+create test event in sales analysis report
+add trigger cloud event bridge
+
+
+NODEJS
+cd 1-no-container
+npm start
+another terminal -curl http://localhost:3000
+
+cd..
+cd 2-container
+ls
+cat Dockerfile
