@@ -117,9 +117,35 @@ for job_element in python_job_elements:
     		#print(link)
     		link_url = link["href"]
     		#print(f"Apply here: {link_url}\n")
+
+
 RDD     
 with open("sample.txt", "w") as f:
 f.write("Spark is a big data framework\n")
 f.write("RDD is the core of Spark\n")
 f.write("Spark is fast and powerful\n")
 print("sample.txt created successfully")
+
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import avg
+
+# Create Spark Session
+spark = SparkSession.builder \
+    .appName("WeatherAnalysis") \
+    .getOrCreate()
+
+# Read CSV file
+df = spark.read.csv(
+    "weather.csv",
+    header=True,
+    inferSchema=True
+)
+
+# Show dataset
+df.show()
+
+# Average temperature per year
+df.groupBy("year") \
+  .agg(avg("temperature")) \
+  .show()
