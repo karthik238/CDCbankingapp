@@ -117,4 +117,9 @@ for job_element in python_job_elements:
     		#print(link)
     		link_url = link["href"]
     		#print(f"Apply here: {link_url}\n")
-     
+RDD     
+with open("sample.txt", "w") as f:
+f.write("Spark is a big data framework\n")
+f.write("RDD is the core of Spark\n")
+f.write("Spark is fast and powerful\n")
+print("sample.txt created successfully")
