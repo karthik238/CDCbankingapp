@@ -1,151 +1,78 @@
-public class testWordCount {
+import java.io.IOException;
 
-	public static class testWordCountMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-		public void map(LongWritable key, Text values Context context) throws IOException, InterruptedException {
-			
-			StringTokenizer tokenizer = new StringTokenizer(values.toString());
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 
-			while (tokenizer.hasMoreTokens()) {
-				values.set(tokenizer.nextToken());
-				context.write(values, new IntWritable(1));
-			}
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 
-		}
-	}
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 
-	public static class testWordCountReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
-		public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException{
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-			int count = 0;
-			for (IntWritable x:values) {
-				count += x.get();
-			}
-			context.write(key, new IntWritable(count));
-		}
-	}
+public class PatientVisitCount {
 
-	public static void main(String[] args) throws Exception {
+    // Mapper Class
+    public static class PatientMapper
+            extends Mapper<LongWritable, Text, Text, IntWritable> {
 
-		configuration conf = new Configuration();
-		Job job = Job.getInstance(conf, "word-count");
-		job.setJarByClass(testWordCount.class);
-		job.setMapperClass(testWordCountMapper.class);
-		job.setReducerClass(testWordCountReducer.class);
+        private final static IntWritable one = new IntWritable(1);
+        private Text patient = new Text();
 
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
+        public void map(LongWritable key, Text value, Context context)
+                throws IOException, InterruptedException {
 
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
+            String line = value.toString();
 
-		System.exit(job.waitForCompletion(true) ? 0:1);
-	}
+            String[] data = line.split(",");
+
+            // Patient ID is at index 2
+            patient.set(data[2]);
+
+            context.write(patient, one);
+        }
+    }
+
+    // Reducer Class
+    public static class PatientReducer
+            extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+        public void reduce(Text key, Iterable<IntWritable> values,
+                           Context context)
+                throws IOException, InterruptedException {
+
+            int sum = 0;
+
+            for (IntWritable val : values) {
+                sum += val.get();
+            }
+
+            context.write(key, new IntWritable(sum));
+        }
+    }
+
+    // Main Method
+    public static void main(String[] args) throws Exception {
+
+        Configuration conf = new Configuration();
+
+        Job job = Job.getInstance(conf, "Patient Visit Count");
+
+        job.setJarByClass(PatientVisitCount.class);
+
+        job.setMapperClass(PatientMapper.class);
+        job.setReducerClass(PatientReducer.class);
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
 }
-
-WEB SCRAPPING
-import requests
-from bs4 import BeautifulSoup
-
-URL = "https://realpython.github.io/fake-jobs/"
-page = requests.get(URL)
-
-soup = BeautifulSoup(page.content, "html.parser")
-results = soup.find(id="ResultsContainer")
-
-
-job_elements = results.find_all("div", class_="card-content")
-#print (job_elements)
-
-'''
-for job_element in job_elements:
-    title_element = job_element.find("h2", class_="title")
-    company_element = job_element.find("h3", class_="company")
-    location_element = job_element.find("p", class_="location")
-    print(title_element)
-    print(company_element)
-    print(location_element)
-    print()
-
-
-for job_element in job_elements:
-    title_element = job_element.find("h2", class_="title")
-    company_element = job_element.find("h3", class_="company")
-    location_element = job_element.find("p", class_="location")
-    print(title_element.text)
-    print(company_element.text)
-    print(location_element.text)
-    print()
-
-'''
-
-for job_element in job_elements:
-    title_element = job_element.find("h2", class_="title")
-    company_element = job_element.find("h3", class_="company")
-    location_element = job_element.find("p", class_="location")
-    print(title_element.text.strip())
-    print(company_element.text.strip())
-    print(location_element.text.strip())
-    print()
-
-import requests
-from bs4 import BeautifulSoup
-
-URL = "https://realpython.github.io/fake-jobs/"
-page = requests.get(URL)
-
-soup = BeautifulSoup(page.content, "html.parser")
-results = soup.find(id="ResultsContainer")
-
-python_jobs = results.find_all(
-    "h2", string=lambda text: "python" in text.lower()
-)
-
-# Access Parent Elements
-python_job_elements = [
-    h2_element.parent.parent.parent for h2_element in python_jobs
-]
-
-# Extract link (href) to apply jobs
-
-#print (python_job_elements)
-
-
-for job_element in python_job_elements:
-    links = job_element.find_all("a")
-    for link in links:    	
-    	if link.text == "Apply":
-    		#print(link)
-    		link_url = link["href"]
-    		#print(f"Apply here: {link_url}\n")
-
-
-RDD     
-with open("sample.txt", "w") as f:
-f.write("Spark is a big data framework\n")
-f.write("RDD is the core of Spark\n")
-f.write("Spark is fast and powerful\n")
-print("sample.txt created successfully")
-
-
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import avg
-
-# Create Spark Session
-spark = SparkSession.builder \
-    .appName("WeatherAnalysis") \
-    .getOrCreate()
-
-# Read CSV file
-df = spark.read.csv(
-    "weather.csv",
-    header=True,
-    inferSchema=True
-)
-
-# Show dataset
-df.show()
-
-# Average temperature per year
-df.groupBy("year") \
-  .agg(avg("temperature")) \
-  .show()
