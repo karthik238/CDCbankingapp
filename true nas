@@ -1,264 +1,399 @@
-DATABASE CONNECTION(MODEL)
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package model;
+Uploaded image
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+CCE 5253 Cloud Security Essentials Lab – Complete Answer
+Q1) Principle of Least Privilege (10 Marks)
+Definition
+The Principle of Least Privilege (PoLP) is a security concept where a user, application, or service is given only the minimum permissions required to perform its task and nothing more.
 
-/**
- *
- * @author sathya.malli
- */
-public class DBUtil {
-    public static Connection getConnection() throws Exception {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        return DriverManager.getConnection(
-            "jdbc:mysql://localhost:3306/mvcdb",
-            "root",
-            ""
-        );
-    }
-    
+It reduces the chances of:
+
+Unauthorized access
+
+Data leakage
+
+Accidental deletion
+
+Malware spread
+
+Insider attacks
+
+How It Works
+Suppose:
+
+A developer only needs access to upload files to S3.
+
+An auditor only needs to view files.
+
+Then:
+
+Developer gets Read + Write
+
+Auditor gets Read-only
+
+No admin access is provided.
+
+Example in AWS IAM
+User	Permission
+Developer	Upload and read S3 objects
+Auditor	Only read S3 objects
+Intern	No access to production resources
+Advantages
+Improves security
+
+Prevents misuse of resources
+
+Reduces attack surface
+
+Helps meet compliance requirements
+
+Prevents accidental changes
+
+Real-Time Example
+In a company:
+
+HR staff should access employee records only.
+
+Finance staff should access billing systems only.
+
+Developers should not access payroll databases.
+
+This is Least Privilege.
+
+AWS Services Used for Least Privilege
+IAM Users
+
+IAM Groups
+
+IAM Policies
+
+IAM Roles
+
+MFA
+
+Resource-based policies
+
+Diagram Explanation
+                AWS Account
+                     |
+        --------------------------------
+        |                              |
+   Developers Group              Auditors Group
+        |                              |
+  S3 Read + Upload              S3 Read Only
+Q2) IAM Configuration Practical (15 Marks)
+Step 1: Create S3 Bucket
+Login to AWS Console
+
+Open S3
+
+Click Create bucket
+
+Bucket name:
+
+abcdocs-secure-bucket
+Keep default settings
+
+Create bucket
+
+Step 2: Create IAM Groups
+Create Developers Group
+Open IAM
+
+Click User groups
+
+Create group
+
+Group name:
+
+Developers
+Attach Policy
+Choose:
+
+AmazonS3FullAccess
+(For lab/demo purpose)
+
+Create Auditors Group
+Create another group:
+
+Auditors
+Attach Policy
+Choose:
+
+AmazonS3ReadOnlyAccess
+Step 3: Create IAM Users
+Create Dev-user
+IAM → Users
+
+Create user
+
+Username:
+
+Dev-user
+Enable:
+
+AWS Management Console access
+
+Set custom password
+
+Add user to group:
+
+Developers
+Create Audit-user
+Create another user:
+
+Audit-user
+Add to:
+
+Auditors
+Step 4: Configure IAM Password Policy
+IAM Dashboard
+
+Account settings
+
+Edit password policy
+
+Set:
+
+Minimum password length:
+
+10
+Require:
+
+Numbers
+
+Symbols
+
+Example:
+
+Cloud@123
+Save changes.
+
+Step 5: Enable MFA for IAM Users
+For Dev-user
+IAM → Users → Dev-user
+
+Security credentials
+
+Assign MFA device
+
+Choose:
+
+Authenticator App
+Scan QR code using:
+
+Google Authenticator
+
+Microsoft Authenticator
+
+Enter two generated OTPs
+
+Activate MFA
+
+Repeat for:
+
+Audit-user
+Step 6: Demonstrate Login Using IAM Credentials
+IAM Login URL
+https://<account-id>.signin.aws.amazon.com/console
+Steps:
+
+Enter account ID
+
+Username:
+
+Dev-user
+Password
+
+Enter MFA code
+
+Login successfully
+
+Permission Verification
+Dev-user Can:
+✅ Upload files to S3
+✅ Read files from S3
+
+Audit-user Can:
+✅ View files
+❌ Cannot upload/delete files
+
+Q3) CloudTrail + CloudWatch Monitoring (15 Marks)
+Step 1: Enable AWS CloudTrail
+What is CloudTrail?
+AWS CloudTrail records:
+
+Login activities
+
+API calls
+
+Resource changes
+
+It helps in:
+
+Auditing
+
+Monitoring
+
+Security analysis
+
+Steps
+Open CloudTrail
+
+Click:
+
+Create trail
+Trail Name
+ABCDocsTrail
+Storage Location
+Create new S3 bucket:
+
+abcdocs-cloudtrail-logs
+Enable:
+Multi-region trail
+Create trail.
+
+Step 2: Store Logs in S3
+CloudTrail automatically stores:
+
+API logs
+
+Login events
+
+Security events
+
+inside the S3 bucket.
+
+Step 3: Create CloudWatch Alarms
+A) CPU Utilization Alarm (>80%)
+Steps
+Open CloudWatch
+
+Alarms → Create Alarm
+
+Select metric
+
+Choose:
+
+EC2 → Per-Instance Metrics → CPUUtilization
+Set condition:
+
+Greater than 80%
+Period:
+
+5 minutes
+B) High Network Traffic Alarm
+Choose metric:
+
+NetworkIn
+or
+
+NetworkOut
+Condition example:
+
+Greater than 10000000 bytes
+Step 4: Create SNS Topic
+What is SNS?
+SNS = Simple Notification Service
+
+Used for:
+
+Email alerts
+
+SMS alerts
+
+Notifications
+
+Steps
+Open SNS
+
+Create Topic
+
+Type
+Standard
+Topic Name
+SecurityAlerts
+Create topic.
+
+Add Email Subscription
+Open topic
+
+Create subscription
+
+Protocol
+Email
+Endpoint
+Enter your email ID.
+
+Confirm subscription from email inbox.
+
+Step 5: Connect CloudWatch Alarm to SNS
+While creating alarm:
+
+Choose:
+
+Send notification to SNS topic
+Select:
+
+SecurityAlerts
+Now:
+
+High CPU → Email alert
+
+High traffic → Email alert
+
+Architecture Diagram
+                EC2 Instance
+                      |
+         -------------------------
+         |                       |
+    CPU Usage               Network Traffic
+         |                       |
+         --------CloudWatch-------
+                     |
+                  Alarm
+                     |
+                    SNS
+                     |
+                  Email Alert
+Important Viva Questions with Answers
+1. What is IAM?
+IAM is AWS Identity and Access Management used to securely manage users, groups, roles, and permissions.
+
+2. Difference between Authentication and Authorization?
+Authentication	Authorization
+Verifies identity	Grants permissions
+Login process	Access control
+3. What is MFA?
+Multi-Factor Authentication adds extra security using OTP or authenticator apps.
+
+4. What is CloudTrail?
+CloudTrail records AWS API activities and account events.
+
+5. What is CloudWatch?
+CloudWatch monitors AWS resources and creates alarms.
+
+6. Difference between CloudTrail and CloudWatch?
+CloudTrail	CloudWatch
+Logs API activities	Monitors metrics
+Used for auditing	Used for monitoring
+7. What is SNS?
+SNS is a notification service for sending alerts via email/SMS.
+
+8. Why use Least Privilege?
+To reduce security risks by giving minimum required access.
+
+9. What is an IAM Policy?
+A JSON document defining permissions.
+
+Example:
+
+{
+  "Effect": "Allow",
+  "Action": "s3:GetObject",
+  "Resource": "*"
 }
+10. What is S3?
+Amazon S3 is an object storage service used to store files securely in the cloud.
 
 
-package model;
-
-public class Student {
-    
-    private int id;
-    private String name;
-    private String email;
-
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    
-}
-
-
-
-package model;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-
-
-public class StudentDAO {
-    public void insert(Student s) throws Exception {
-        try (Connection con = DBUtil.getConnection()) {
-            PreparedStatement ps =
-                    con.prepareStatement("INSERT INTO student(name,email) VALUES (?,?)");
-            ps.setString(1, s.getName());
-            ps.setString(2, s.getEmail());
-            ps.executeUpdate();
-        }
-    }
-
-    public List<Student> getAll() throws Exception {
-        List<Student> list = new ArrayList<>();
-        try (Connection con = DBUtil.getConnection()) {
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery("SELECT * FROM student");
-            
-            while(rs.next()){
-                Student s = new Student();
-                s.setId(rs.getInt("id"));
-                s.setName(rs.getString("name"));
-                s.setEmail(rs.getString("email"));
-                list.add(s);
-            }
-        }
-        return list;
-    }
-    
-}
-
-PACKAGE CONTROLLER
-
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
-package controller;
-
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import model.DBUtil;
-
-/**
- *
- * @author sathya.malli
- */
-@WebServlet(name = "LoginServlet", urlPatterns = {"/LoginServlet"})
-public class LoginServlet extends HttpServlet {
-
-    @Override
-    protected void doPost(HttpServletRequest req,
-                          HttpServletResponse res)
-            throws IOException, ServletException {
-
-        String u = req.getParameter("username");
-        String p = req.getParameter("password");
-
-        try (Connection con = DBUtil.getConnection()) {
-            PreparedStatement ps =
-                    con.prepareStatement(
-                            "SELECT * FROM users WHERE username=? AND password=?");
-            ps.setString(1, u);
-            ps.setString(2, p);
-            
-            ResultSet rs = ps.executeQuery();
-            if(rs.next())
-                req.getRequestDispatcher("student").forward(req,res);
-            else
-                res.sendRedirect("login.jsp");
-        } catch (Exception ex) {
-            Logger.getLogger(LoginServlet.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-}
-
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
-package controller;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import model.Student;
-import model.StudentDAO;
-
-/**
- *
- * @author sathya.malli
- */
-@WebServlet(name = "StudentServlet", urlPatterns = {"/StudentServlet"})
-public class StudentServlet extends HttpServlet {
-
-    @Override
-    protected void doGet(HttpServletRequest req,
-                         HttpServletResponse res)
-            throws IOException, ServletException {
-        try {
-            StudentDAO dao = new StudentDAO();
-            req.setAttribute("list", dao.getAll());
-            req.getRequestDispatcher("student.jsp")
-               .forward(req,res);
-        } catch(Exception e) {
-        }
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest req,
-                          HttpServletResponse res)
-            throws IOException {
-        try {
-            Student s = new Student();
-            s.setName(req.getParameter("name"));
-            s.setEmail(req.getParameter("email"));
-            new StudentDAO().insert(s);
-            res.sendRedirect("student");
-        } catch(Exception e) {
-        }
-    }
-}
-JSP
-<%-- 
-    Document   : login
-    Created on : Jan 3, 2026, 4:33:32 PM
-    Author     : sathya.malli
---%>
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
-    </head>
-    <body>
-        <h2>Login</h2>
-        <form action="login" method="post">
-        Username: <input name="username"><br>
-        Password: <input type="password" name="password"><br>
-        <input type="submit" value="Login">
-        </form>
-    </body>
-</html>
-
-
-<%-- 
-    Document   : student
-    Created on : Jan 3, 2026, 4:34:06 PM
-    Author     : sathya.malli
---%>
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ page import="java.util.*,model.Student" %>
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>JSP Page</title>
-    </head>
-    <body>
-        <h2>Add Student</h2>
-        <form action="student" method="post">
-        Name: <input name="name"><br>
-        Email: <input name="email"><br>
-        <input type="submit" value="Save">
-        </form>
-
-        <h2>Student List</h2>
-        <table border="1">
-        <tr><th>ID</th><th>Name</th><th>Email</th></tr>
-
-        <%
-        List<Student> list = (List<Student>)request.getAttribute("list");
-        for(Student s : list){
-        %>
-        <tr>
-        <td><%=s.getId()%></td>
-        <td><%=s.getName()%></td>
-        <td><%=s.getEmail()%></td>
-        </tr>
-
-<dependency>
-    <groupId>mysql</groupId>
-    <artifactId>mysql-connector-java</artifactId>
-    <version>8.0.33</version>
-</dependency>
-        <% } %>
-
-        </table>
-    </body>
-</html>
